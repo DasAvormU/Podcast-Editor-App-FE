@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reenactment Podcast Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Verstecke Elemente, die nicht aktiv sind */
+        .hidden-tab { display: none !important; }
+        .spinner { border: 4px solid rgba(255,255,255,0.3); border-radius: 50%; border-top: 4px solid white; width: 24px; height: 24px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 font-sans min-h-screen">
+
+    <!-- Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-10">
+        <div class="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <div class="bg-indigo-600 p-2 rounded-lg text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"></path></svg>
+                </div>
+                <h1 class="font-bold text-xl tracking-tight text-slate-800">Reenactment Podcaster</h1>
+            </div>
+            <nav class="flex gap-2">
+                <button id="tab-generator-btn" class="px-4 py-2 rounded-md text-sm font-medium bg-indigo-50 text-indigo-700 transition-colors">Generator</button>
+                <button id="tab-settings-btn" class="px-4 py-2 rounded-md text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors flex items-center gap-2">Routine (Jingles)</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-4 py-8">
+        
+        <!-- SETTINGS VIEW (Routine) -->
+        <div id="view-settings" class="space-y-6 hidden-tab">
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <h2 class="text-lg font-semibold mb-4 border-b pb-2">Feste Podcast-Routinen</h2>
+                <p class="text-sm text-slate-500 mb-6">Laden Sie hier einmalig Ihr Intro und Outro hoch. Diese werden bei jeder Generierung verwendet.</p>
+
+                <div class="grid md:grid-cols-2 gap-6">
+                    <!-- Intro -->
+                    <div class="border border-dashed border-slate-300 rounded-lg p-6 flex flex-col items-center justify-center text-center bg-slate-50">
+                        <p class="font-medium text-slate-700 mb-2">Intro Jingle</p>
+                        <div id="intro-status" class="hidden bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm flex items-center gap-2 mb-2">
+                            <span>✓ Geladen</span>
+                        </div>
+                        <label class="cursor-pointer bg-white border border-slate-300 px-4 py-2 rounded shadow-sm text-sm hover:bg-slate-50 transition">
+                            Intro hochladen
+                            <input type="file" id="upload-intro" accept="audio/*" class="hidden" />
+                        </label>
+                    </div>
+
+                    <!-- Outro -->
+                    <div class="border border-dashed border-slate-300 rounded-lg p-6 flex flex-col items-center justify-center text-center bg-slate-50">
+                        <p class="font-medium text-slate-700 mb-2">Outro Jingle</p>
+                        <div id="outro-status" class="hidden bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm flex items-center gap-2 mb-2">
+                            <span>✓ Geladen</span>
+                        </div>
+                        <label class="cursor-pointer bg-white border border-slate-300 px-4 py-2 rounded shadow-sm text-sm hover:bg-slate-50 transition">
+                            Outro hochladen
+                            <input type="file" id="upload-outro" accept="audio/*" class="hidden" />
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- GENERATOR VIEW -->
+        <div id="view-generator" class="space-y-6">
+            
+            <!-- Warnung, falls Jingles fehlen -->
+            <div id="jingle-warning" class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r flex gap-3">
+                <svg class="text-amber-500 shrink-0 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                <p class="text-sm text-amber-800"><strong>System-Hinweis:</strong> Bitte hinterlegen Sie zuerst unter "Routine" Ihr Intro und Outro.</p>
+            </div>
+
+            <!-- Upload Area -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-1">
+                <label class="flex flex-col items-center justify-center w-full h-40 border-2 border-slate-300 border-dashed rounded-lg cursor-pointer bg-slate-50 hover:bg-slate-100 transition-colors">
+                    <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                        <svg class="w-10 h-10 text-slate-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                        <p class="mb-2 text-sm text-slate-600"><span class="font-semibold text-indigo-600">Klicken zum Hochladen</span> (WhatsApp Audios)</p>
+                    </div>
+                    <input type="file" id="upload-segments" class="hidden" multiple accept="audio/*" />
+                </label>
+            </div>
+
+            <!-- Content Area (Wird erst angezeigt, wenn Dateien da sind) -->
+            <div id="content-area" class="grid md:grid-cols-3 gap-6 hidden-tab">
+                
+                <!-- Liste der Dateien -->
+                <div class="md:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-semibold text-slate-800">Audio-Segmente</h3>
+                        <span class="text-xs font-medium bg-slate-100 text-slate-600 px-2 py-1 rounded">Chronologisch sortiert</span>
+                    </div>
+                    <div id="file-list" class="space-y-2">
+                        <!-- Dateien werden hier via JS eingefügt -->
+                    </div>
+                </div>
+
+                <!-- Control Panel -->
+                <div class="space-y-6">
+                    
+                    <!-- Time Panel -->
+                    <div id="time-panel" class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 transition-colors">
+                        <h3 class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2">Gesamtlänge</h3>
+                        <div class="text-4xl font-black font-mono text-slate-800 flex items-center gap-2" id="total-time">
+                            0:00
+                        </div>
+                        <p id="time-status" class="mt-2 text-sm text-slate-500">Wird berechnet...</p>
+                    </div>
+
+                    <!-- Action Panel -->
+                    <div class="bg-slate-800 rounded-xl shadow-sm border border-slate-700 p-6 text-white">
+                        <h3 class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">Produktion</h3>
+                        
+                        <button id="btn-generate" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                            Podcast generieren
+                        </button>
+
+                        <div id="processing-state" class="hidden-tab space-y-4 mt-4 text-center">
+                            <div class="flex justify-center"><div class="spinner"></div></div>
+                            <p class="text-sm text-slate-300 animate-pulse">Server verarbeitet Audio...<br><span class="text-xs text-slate-400">(Das kann bis zu 1-2 Minuten dauern)</span></p>
+                        </div>
+
+                        <div id="success-state" class="hidden-tab space-y-4 mt-4">
+                            <div class="bg-emerald-500/20 text-emerald-400 p-3 rounded text-center text-sm font-medium">
+                                ✓ Erfolgreich erstellt
+                            </div>
+                            <a id="download-link" href="#" download="Reenactment_Podcast.mp3" class="w-full bg-white text-slate-900 font-semibold py-3 px-4 rounded flex items-center justify-center gap-2 hover:bg-slate-100">
+                                MP3 Herunterladen
+                            </a>
+                        </div>
+                        
+                        <div id="error-state" class="hidden-tab mt-4 bg-red-500/20 text-red-400 p-3 rounded text-sm text-center">
+                            Ein Fehler ist aufgetreten. Bitte laden Sie die Seite neu.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // DIE SCHNITTSTELLE ZUM MASCHINENRAUM
+        const BACKEND_URL = "https://podcast-editor-app.onrender.com/generate-podcast/";
+
+        // State Management (Gedächtnis)
+        let introFile = null;
+        let outroFile = null;
+        let segmentFiles = [];
+
+        // DOM Elemente
+        const tabGenBtn = document.getElementById('tab-generator-btn');
+        const tabSetBtn = document.getElementById('tab-settings-btn');
+        const viewGen = document.getElementById('view-generator');
+        const viewSet = document.getElementById('view-settings');
+        
+        // Navigation Logik
+        tabGenBtn.onclick = () => {
+            viewGen.classList.remove('hidden-tab');
+            viewSet.classList.add('hidden-tab');
+            tabGenBtn.classList.replace('text-slate-600', 'text-indigo-700');
+            tabGenBtn.classList.replace('hover:bg-slate-100', 'bg-indigo-50');
+            tabSetBtn.classList.replace('text-indigo-700', 'text-slate-600');
+            tabSetBtn.classList.replace('bg-indigo-50', 'hover:bg-slate-100');
+        };
+        tabSetBtn.onclick = () => {
+            viewSet.classList.remove('hidden-tab');
+            viewGen.classList.add('hidden-tab');
+            tabSetBtn.classList.replace('text-slate-600', 'text-indigo-700');
+            tabSetBtn.classList.replace('hover:bg-slate-100', 'bg-indigo-50');
+            tabGenBtn.classList.replace('text-indigo-700', 'text-slate-600');
+            tabGenBtn.classList.replace('bg-indigo-50', 'hover:bg-slate-100');
+        };
+
+        // Dateiverwaltung Jingles
+        document.getElementById('upload-intro').onchange = (e) => {
+            if(e.target.files.length) { introFile = e.target.files[0]; document.getElementById('intro-status').classList.remove('hidden'); checkReady(); }
+        };
+        document.getElementById('upload-outro').onchange = (e) => {
+            if(e.target.files.length) { outroFile = e.target.files[0]; document.getElementById('outro-status').classList.remove('hidden'); checkReady(); }
+        };
+
+        function checkReady() {
+            if (introFile && outroFile) {
+                document.getElementById('jingle-warning').classList.add('hidden-tab');
+            }
+        }
+
+        // WhatsApp Audios hochladen und sortieren
+        document.getElementById('upload-segments').onchange = async (e) => {
+            const files = Array.from(e.target.files);
+            if (!files.length) return;
+
+            // Alphabetisch/Chronologisch sortieren (WhatsApp Standard)
+            segmentFiles = files.sort((a, b) => a.name.localeCompare(b.name));
+            
+            document.getElementById('content-area').classList.remove('hidden-tab');
+            renderFileList();
+            calculateTotalTime();
+        };
+
+        function renderFileList() {
+            const list = document.getElementById('file-list');
+            list.innerHTML = '';
+            segmentFiles.forEach((f, i) => {
+                list.innerHTML += `
+                    <div class="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded text-sm">
+                        <div class="flex items-center gap-3">
+                            <span class="bg-indigo-100 text-indigo-700 w-6 h-6 rounded-full flex justify-center items-center font-bold text-xs">${i+1}</span>
+                            <span class="text-slate-700 truncate">${f.name}</span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // Simuliert die Längenberechnung für das UI
+        async function calculateTotalTime() {
+            let totalSeconds = 20; // Pauschal 20s für Intro/Outro
+            
+            const getDuration = (file) => new Promise(resolve => {
+                const audio = new Audio(URL.createObjectURL(file));
+                audio.onloadedmetadata = () => resolve(audio.duration);
+                audio.onerror = () => resolve(30); // Fallback
+            });
+
+            for (let file of segmentFiles) {
+                totalSeconds += await getDuration(file);
+            }
+
+            const m = Math.floor(totalSeconds / 60);
+            const s = Math.floor(totalSeconds % 60);
+            document.getElementById('total-time').innerText = `${m}:${s.toString().padStart(2, '0')}`;
+
+            const timePanel = document.getElementById('time-panel');
+            const timeStatus = document.getElementById('time-status');
+
+            if (totalSeconds > 840) { // 14 Minuten
+                timePanel.classList.add('bg-red-50', 'border-red-200');
+                document.getElementById('total-time').classList.add('text-red-600');
+                timeStatus.innerHTML = '<span class="text-red-600 font-bold">Achtung: Zielzeit von 14 Min. überschritten!</span>';
+            } else {
+                timePanel.classList.remove('bg-red-50', 'border-red-200');
+                document.getElementById('total-time').classList.remove('text-red-600');
+                timeStatus.innerHTML = '<span class="text-emerald-600 font-bold">Perfekt im Zeitrahmen.</span>';
+            }
+        }
+
+        // API CALL: Der eigentliche Generator-Prozess
+        document.getElementById('btn-generate').onclick = async () => {
+            if (!introFile || !outroFile || segmentFiles.length === 0) {
+                alert("Bitte hinterlegen Sie Intro, Outro und mindestens ein Segment.");
+                return;
+            }
+
+            // UI umbauen (Ladezustand)
+            document.getElementById('btn-generate').classList.add('hidden-tab');
+            document.getElementById('processing-state').classList.remove('hidden-tab');
+            document.getElementById('error-state').classList.add('hidden-tab');
+
+            // Datenpaket für den Render-Server packen
+            const formData = new FormData();
+            formData.append('intro', introFile);
+            formData.append('outro', outroFile);
+            segmentFiles.forEach(file => {
+                formData.append('segments', file);
+            });
+
+            try {
+                // Anfrage an Ihren Render-Server senden
+                const response = await fetch(BACKEND_URL, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error("Server Error");
+
+                // Datei (MP3) vom Server empfangen
+                const blob = await response.blob();
+                const downloadUrl = window.URL.createObjectURL(blob);
+                
+                // UI umbauen (Erfolg)
+                document.getElementById('processing-state').classList.add('hidden-tab');
+                document.getElementById('success-state').classList.remove('hidden-tab');
+                
+                const dlLink = document.getElementById('download-link');
+                dlLink.href = downloadUrl;
+                dlLink.download = "Reenactment_Podcast_Final.mp3";
+
+            } catch (error) {
+                console.error(error);
+                document.getElementById('processing-state').classList.add('hidden-tab');
+                document.getElementById('btn-generate').classList.remove('hidden-tab');
+                document.getElementById('error-state').classList.remove('hidden-tab');
+            }
+        };
+    </script>
+</body>
+</html>
